@@ -41,10 +41,28 @@
     <h3>New Explorer</h3>
     <input id="new-name" maxlength="14" placeholder="Your name" autocomplete="off"
            onkeydown="if(event.key==='Enter')App.createProfile()">
+    <input id="new-pin" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
+           placeholder="Secret 4-digit PIN (optional)"
+           oninput="this.value=this.value.replace(/\D/g,'')"
+           onkeydown="if(event.key==='Enter')App.createProfile()">
     <div class="avatar-grid" id="avatar-grid"></div>
     <div class="modal-actions">
       <button class="btn ghost" onclick="document.getElementById('new-profile-modal').classList.remove('visible')">Cancel</button>
       <button class="btn" onclick="App.createProfile()">Let's go!</button>
+    </div>
+  </div>
+</div>
+
+<!-- PIN keypad (verify or set) -->
+<div class="modal" id="pin-modal">
+  <div class="modal-box">
+    <h3 id="pin-title"></h3>
+    <p class="pin-sub" id="pin-sub"></p>
+    <div class="pin-dots" id="pin-dots"><span></span><span></span><span></span><span></span></div>
+    <div class="pin-pad" id="pin-pad"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="App.closePin()">Cancel</button>
+      <button class="btn ghost" id="btn-pin-remove" style="display:none" onclick="App.removePin()">Remove PIN</button>
     </div>
   </div>
 </div>

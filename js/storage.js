@@ -32,13 +32,19 @@ const Storage = {
     this._pushProgress(profileId, progress);
   },
 
-  addProfile(name, avatar) {
+  addProfile(name, avatar, pin = null) {
     const profiles = this.getProfiles();
-    const p = { id: "p" + Date.now() + Math.floor(Math.random() * 1e4), name, avatar, created: Date.now() };
+    const p = { id: "p" + Date.now() + Math.floor(Math.random() * 1e4), name, avatar, pin, created: Date.now(), updated: Date.now() };
     profiles.push(p);
     this.saveProfiles(profiles);
     this._pushProfile(p);
     return p;
+  },
+
+  updateProfile(p) {
+    p.updated = Date.now();
+    this.saveProfiles(this.getProfiles().map(x => x.id === p.id ? p : x));
+    this._pushProfile(p);
   },
 
   // Deletes a profile everywhere. A tombstone doc stops other devices'
@@ -136,7 +142,10 @@ const Storage = {
     const byId = new Map(local.map(p => [p.id, p]));
     let changed = false;
     for (const rp of remoteProfiles) {
-      if (!byId.has(rp.id)) { byId.set(rp.id, rp); changed = true; }
+      const loc = byId.get(rp.id);
+      if (!loc) { byId.set(rp.id, rp); changed = true; }
+      // Newer remote copy wins (e.g. PIN changed on another device).
+      else if ((rp.updated || 0) > (loc.updated || 0)) { byId.set(rp.id, rp); changed = true; }
     }
     if (changed || byId.size !== this.getProfiles().length) this.saveProfiles([...byId.values()]);
 

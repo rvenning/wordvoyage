@@ -1,6 +1,7 @@
 // App shell: screen navigation, profiles, world map, leaderboard.
 
 const AVATARS = ["🦊", "🐼", "🦄", "🐸", "🐯", "🦁", "🐨", "🐷", "🦋", "🐙", "🦖", "🐹"];
+const ADMIN_PIN = "7777"; // administrator override — unlocks any profile
 
 const App = {
   profile: null,
@@ -43,9 +44,11 @@ const App = {
       div.setAttribute("role", "button");
       div.innerHTML = `<span class="avatar">${p.avatar}</span><span class="pname">${this.esc(p.name)}</span>
         <span class="pmeta">⭐ ${Storage.totalScore(prog).toLocaleString()} · 🪙 ${prog.coins}</span>
+        <button class="ppin" title="${p.pin ? "PIN protected — change PIN" : "Set a PIN"}">${p.pin ? "🔒" : "🔓"}</button>
         <button class="pdelete" title="Delete profile">🗑️</button>`;
       div.onclick = () => this.selectProfile(p);
       div.querySelector(".pdelete").onclick = (ev) => this.askDeleteProfile(p, ev);
+      div.querySelector(".ppin").onclick = (ev) => this.managePin(p, ev);
       wrap.appendChild(div);
     }
     const add = document.createElement("div");
@@ -60,6 +63,19 @@ const App = {
   askDeleteProfile(p, ev) {
     ev.stopPropagation();
     Sfx.click();
+    if (p.pin) {
+      this.openPin({
+        title: `${this.esc(p.name)} is PIN protected`,
+        sub: "Enter the PIN to delete this profile",
+        mode: "verify", profile: p,
+        onSuccess: () => this._openDeleteModal(p),
+      });
+    } else {
+      this._openDeleteModal(p);
+    }
+  },
+
+  _openDeleteModal(p) {
     this._deleting = p;
     this.el("del-title").textContent = `Delete ${p.avatar} ${p.name}?`;
     this.el("del-name").textContent = p.name;
@@ -110,20 +126,132 @@ const App = {
   createProfile() {
     const name = this.el("new-name").value.trim();
     if (!name) { this.el("new-name").focus(); return; }
+    const pin = this.el("new-pin").value.trim();
+    if (pin && !/^\d{4}$/.test(pin)) { this.el("new-pin").focus(); return; }
     const avatar = document.querySelector(".avatar-choice.selected")?.textContent || AVATARS[0];
-    const p = Storage.addProfile(name.slice(0, 14), avatar);
+    const p = Storage.addProfile(name.slice(0, 14), avatar, pin || null);
     this.el("new-profile-modal").classList.remove("visible");
+    this.el("new-pin").value = "";
     Sfx.wordFound(4);
-    this.selectProfile(p);
+    this._enterProfile(p);
   },
 
   selectProfile(p) {
     Sfx.click();
+    if (p.pin) {
+      this.openPin({
+        title: `${p.avatar} ${this.esc(p.name)} is locked`,
+        sub: "Enter the 4-digit PIN",
+        mode: "verify", profile: p,
+        onSuccess: () => this._enterProfile(p),
+      });
+    } else {
+      this._enterProfile(p);
+    }
+  },
+
+  _enterProfile(p) {
     this.profile = p;
     const s = Storage.getSettings();
     s.lastProfile = p.id;
     Storage.saveSettings(s);
     this.showMap();
+  },
+
+  // ---------- PIN keypad ----------
+  openPin(ctx) {
+    this._pin = { digits: "", ...ctx };
+    this.el("pin-title").innerHTML = ctx.title;
+    this.el("pin-sub").textContent = ctx.sub || "";
+    this.el("btn-pin-remove").style.display = ctx.allowRemove ? "" : "none";
+    const pad = this.el("pin-pad");
+    if (!pad.dataset.built) {
+      pad.dataset.built = "1";
+      for (const k of ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"]) {
+        const b = document.createElement("button");
+        b.className = "pin-key" + (k === "" ? " blank" : "");
+        b.textContent = k;
+        if (k !== "") b.onclick = () => this.pinKey(k);
+        pad.appendChild(b);
+      }
+    }
+    this.renderPinDots();
+    this.el("pin-modal").classList.add("visible");
+  },
+
+  closePin() {
+    this._pin = null;
+    this.el("pin-modal").classList.remove("visible");
+  },
+
+  renderPinDots() {
+    const n = this._pin ? this._pin.digits.length : 0;
+    [...this.el("pin-dots").children].forEach((d, i) => d.classList.toggle("on", i < n));
+  },
+
+  pinKey(k) {
+    if (!this._pin) return;
+    Sfx.click();
+    if (k === "⌫") this._pin.digits = this._pin.digits.slice(0, -1);
+    else if (this._pin.digits.length < 4) this._pin.digits += k;
+    this.renderPinDots();
+    if (this._pin.digits.length === 4) setTimeout(() => this.pinComplete(), 120);
+  },
+
+  pinComplete() {
+    if (!this._pin) return;
+    const { digits, mode, profile, onSuccess } = this._pin;
+    if (mode === "verify") {
+      if (digits === profile.pin || digits === ADMIN_PIN) {
+        Sfx.wordFound(3);
+        this.closePin();
+        onSuccess();
+      } else {
+        Sfx.wrong();
+        const dots = this.el("pin-dots");
+        dots.classList.add("shake");
+        setTimeout(() => {
+          dots.classList.remove("shake");
+          if (this._pin) { this._pin.digits = ""; this.renderPinDots(); }
+        }, 450);
+      }
+    } else { // set
+      profile.pin = digits;
+      Storage.updateProfile(profile);
+      Sfx.wordFound(4);
+      this.closePin();
+      this.renderProfiles();
+    }
+  },
+
+  managePin(p, ev) {
+    ev.stopPropagation();
+    Sfx.click();
+    const openSet = () => this.openPin({
+      title: `${p.pin ? "New" : "Set a"} PIN for ${p.avatar} ${this.esc(p.name)}`,
+      sub: "Tap 4 digits — don't forget them!",
+      mode: "set", profile: p, allowRemove: !!p.pin,
+    });
+    if (p.pin) {
+      this.openPin({
+        title: `Change ${this.esc(p.name)}'s PIN`,
+        sub: "Enter the current PIN first",
+        mode: "verify", profile: p,
+        onSuccess: openSet,
+      });
+    } else {
+      openSet();
+    }
+  },
+
+  removePin() {
+    if (!this._pin || !this._pin.profile) return;
+    const p = this._pin.profile;
+    p.pin = null;
+    Storage.updateProfile(p);
+    Sfx.click();
+    this.closePin();
+    this.renderProfiles();
   },
 
   // ---------- map ----------

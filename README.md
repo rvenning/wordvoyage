@@ -10,6 +10,7 @@ crossword grid, and travel through 7 destinations and 56 levels — Sydney to Ri
 - 🗺️ 7 destinations × 8 levels with a gentle-to-tricky difficulty curve
 - ✨ Bonus words, coins, and hints (💡 costs 100 coins)
 - 👨‍👩‍👧 Pick-a-name family profiles — no passwords
+- 🔒 Optional 4-digit PIN per profile (guards playing, PIN changes, and deletion); admin override code unlocks any profile
 - 🏆 Shared family leaderboard
 - 💾 Auto-save: quit mid-level and resume on any device
 - 🔊 All sound effects synthesized with WebAudio (no asset downloads)
