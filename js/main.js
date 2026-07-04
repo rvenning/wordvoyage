@@ -38,18 +38,53 @@ const App = {
     wrap.innerHTML = "";
     for (const p of Storage.getProfiles()) {
       const prog = Storage.getProgress(p.id);
-      const div = document.createElement("button");
+      const div = document.createElement("div");
       div.className = "profile-card";
+      div.setAttribute("role", "button");
       div.innerHTML = `<span class="avatar">${p.avatar}</span><span class="pname">${this.esc(p.name)}</span>
-        <span class="pmeta">⭐ ${Storage.totalScore(prog).toLocaleString()} · 🪙 ${prog.coins}</span>`;
+        <span class="pmeta">⭐ ${Storage.totalScore(prog).toLocaleString()} · 🪙 ${prog.coins}</span>
+        <button class="pdelete" title="Delete profile">🗑️</button>`;
       div.onclick = () => this.selectProfile(p);
+      div.querySelector(".pdelete").onclick = (ev) => this.askDeleteProfile(p, ev);
       wrap.appendChild(div);
     }
-    const add = document.createElement("button");
+    const add = document.createElement("div");
     add.className = "profile-card add";
+    add.setAttribute("role", "button");
     add.innerHTML = `<span class="avatar">➕</span><span class="pname">New Explorer</span>`;
     add.onclick = () => this.showNewProfile();
     wrap.appendChild(add);
+  },
+
+  // ---------- delete profile ----------
+  askDeleteProfile(p, ev) {
+    ev.stopPropagation();
+    Sfx.click();
+    this._deleting = p;
+    this.el("del-title").textContent = `Delete ${p.avatar} ${p.name}?`;
+    this.el("del-name").textContent = p.name;
+    this.el("del-confirm").value = "";
+    this.el("btn-delete-confirm").disabled = true;
+    this.el("delete-modal").classList.add("visible");
+    this.el("del-confirm").focus();
+  },
+
+  updateDeleteButton() {
+    const typed = this.el("del-confirm").value.trim().toLowerCase();
+    const target = (this._deleting?.name || "").toLowerCase();
+    this.el("btn-delete-confirm").disabled = typed !== target;
+  },
+
+  confirmDeleteProfile() {
+    const p = this._deleting;
+    if (!p) return;
+    if (this.el("del-confirm").value.trim().toLowerCase() !== p.name.toLowerCase()) return;
+    Storage.deleteProfile(p.id);
+    if (this.profile && this.profile.id === p.id) this.profile = null;
+    this._deleting = null;
+    this.el("delete-modal").classList.remove("visible");
+    Sfx.wrong(); // sombre "gone" sound
+    this.renderProfiles();
   },
 
   showNewProfile() {

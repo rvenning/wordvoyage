@@ -41,6 +41,22 @@ const Storage = {
     return p;
   },
 
+  // Deletes a profile everywhere. A tombstone doc stops other devices'
+  // stale local copies from re-uploading the profile on their next sync.
+  deleteProfile(profileId) {
+    this.saveProfiles(this.getProfiles().filter(p => p.id !== profileId));
+    localStorage.removeItem("wv_progress_" + profileId);
+    this._set("wv_deleted", [...new Set([...this._get("wv_deleted", []), profileId])]);
+    const s = this.getSettings();
+    if (s.lastProfile === profileId) { s.lastProfile = null; this.saveSettings(s); }
+    if (this.fb) {
+      const { db, doc, setDoc, deleteDoc } = this.fb;
+      deleteDoc(doc(db, "wordvoyage", "profile_" + profileId)).catch(e => console.warn("delete profile failed", e));
+      deleteDoc(doc(db, "wordvoyage", "progress_" + profileId)).catch(e => console.warn("delete progress failed", e));
+      setDoc(doc(db, "wordvoyage", "deleted_" + profileId), { id: profileId, at: Date.now() }).catch(e => console.warn("tombstone failed", e));
+    }
+  },
+
   totalScore(progress) {
     return Object.values(progress.levels).reduce((s, l) => s + (l.score || 0), 0);
   },
@@ -84,24 +100,45 @@ const Storage = {
   },
 
   async _syncDown() {
-    const { db, collection, getDocs } = this.fb;
+    const { db, doc, setDoc, deleteDoc, collection, getDocs } = this.fb;
     const snap = await getDocs(collection(db, "wordvoyage"));
-    const remoteProfiles = [];
+    let remoteProfiles = [];
     const remoteProgress = {};
+    const remoteDeleted = new Set();
     snap.forEach(d => {
       const v = d.data();
       if (d.id.startsWith("profile_")) remoteProfiles.push(v);
       if (d.id.startsWith("progress_")) remoteProgress[d.id.slice(9)] = v;
+      if (d.id.startsWith("deleted_")) remoteDeleted.add(d.id.slice(8));
     });
 
+    // Union tombstones from both sides, purge anything they cover.
+    const deleted = new Set([...this._get("wv_deleted", []), ...remoteDeleted]);
+    this._set("wv_deleted", [...deleted]);
+    for (const id of deleted) {
+      if (!remoteDeleted.has(id)) {
+        setDoc(doc(db, "wordvoyage", "deleted_" + id), { id, at: Date.now() }).catch(() => {});
+      }
+      localStorage.removeItem("wv_progress_" + id);
+      delete remoteProgress[id];
+    }
+    // Remote docs that outlived their tombstone (pushed by a stale device): remove them.
+    for (const rp of remoteProfiles) {
+      if (deleted.has(rp.id)) {
+        deleteDoc(doc(db, "wordvoyage", "profile_" + rp.id)).catch(() => {});
+        deleteDoc(doc(db, "wordvoyage", "progress_" + rp.id)).catch(() => {});
+      }
+    }
+    remoteProfiles = remoteProfiles.filter(p => !deleted.has(p.id));
+
     // Merge profiles by id.
-    const local = this.getProfiles();
+    const local = this.getProfiles().filter(p => !deleted.has(p.id));
     const byId = new Map(local.map(p => [p.id, p]));
     let changed = false;
     for (const rp of remoteProfiles) {
       if (!byId.has(rp.id)) { byId.set(rp.id, rp); changed = true; }
     }
-    if (changed || remoteProfiles.length !== local.length) this.saveProfiles([...byId.values()]);
+    if (changed || byId.size !== this.getProfiles().length) this.saveProfiles([...byId.values()]);
 
     // Push any local-only profiles up.
     const remoteIds = new Set(remoteProfiles.map(p => p.id));

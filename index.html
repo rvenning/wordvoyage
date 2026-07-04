@@ -49,6 +49,22 @@
   </div>
 </div>
 
+<!-- Delete profile confirmation -->
+<div class="modal" id="delete-modal">
+  <div class="modal-box">
+    <h3 id="del-title"></h3>
+    <p class="del-warn">⚠️ This erases their levels, coins and scores on <b>every device</b>. It can't be undone!</p>
+    <p>Type <b id="del-name"></b> to confirm:</p>
+    <input id="del-confirm" maxlength="14" autocomplete="off" placeholder="Type the name"
+           oninput="App.updateDeleteButton()"
+           onkeydown="if(event.key==='Enter')App.confirmDeleteProfile()">
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="document.getElementById('delete-modal').classList.remove('visible')">Cancel</button>
+      <button class="btn danger" id="btn-delete-confirm" disabled onclick="App.confirmDeleteProfile()">Delete forever</button>
+    </div>
+  </div>
+</div>
+
 <!-- Map / destinations -->
 <div class="screen" id="screen-map">
   <header class="bar">

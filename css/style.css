@@ -86,6 +86,18 @@ body {
 .profile-card .pname { font-weight: 800; font-size: 1.1rem; }
 .pmeta { font-size: 0.8rem; opacity: 0.7; font-weight: 600; }
 .profile-card.add { background: rgba(255,255,255,0.55); border: 3px dashed rgba(255,255,255,0.9); }
+.profile-card { position: relative; }
+.pdelete {
+  position: absolute; top: 6px; right: 6px;
+  border: none; cursor: pointer;
+  background: transparent; font-size: 1rem;
+  opacity: 0.45; padding: 4px; border-radius: 8px;
+}
+.pdelete:hover { opacity: 1; background: #ffe0e0; }
+
+.btn.danger { background: linear-gradient(180deg, #ff6b6b, #e03131); box-shadow: 0 5px 0 #a61e1e, 0 8px 18px rgba(0, 0, 0, 0.2); }
+.btn:disabled { filter: grayscale(0.9); opacity: 0.55; cursor: not-allowed; transform: none; }
+.del-warn { background: #fff3cd; border-radius: 12px; padding: 10px; font-size: 0.95rem; }
 
 /* ---------- modal ---------- */
 .modal {
