@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>WordVoyage 🌍 — Word Puzzle Adventure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
+</head>
+<body>
+
+<!-- Splash -->
+<div class="screen active" id="screen-splash">
+  <div class="splash-inner">
+    <div class="splash-globe">🌍</div>
+    <h1 class="logo">Word<span>Voyage</span></h1>
+    <p class="tagline">Swipe letters. Solve puzzles. Travel the world!</p>
+    <button class="btn big" onclick="App.play()">✈️ Start the Voyage</button>
+    <div class="splash-foot">
+      <span id="sync-badge">…</span>
+      <button class="btn-sound icon-btn" onclick="App.toggleSound()">🔊</button>
+    </div>
+  </div>
+</div>
+
+<!-- Profile picker -->
+<div class="screen" id="screen-profiles">
+  <header class="bar">
+    <button class="icon-btn" onclick="App.showScreen('splash')">←</button>
+    <h2>Who's playing?</h2>
+    <button class="btn-sound icon-btn" onclick="App.toggleSound()">🔊</button>
+  </header>
+  <div class="profile-list" id="profile-list"></div>
+</div>
+
+<!-- New profile modal -->
+<div class="modal" id="new-profile-modal">
+  <div class="modal-box">
+    <h3>New Explorer</h3>
+    <input id="new-name" maxlength="14" placeholder="Your name" autocomplete="off"
+           onkeydown="if(event.key==='Enter')App.createProfile()">
+    <div class="avatar-grid" id="avatar-grid"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="document.getElementById('new-profile-modal').classList.remove('visible')">Cancel</button>
+      <button class="btn" onclick="App.createProfile()">Let's go!</button>
+    </div>
+  </div>
+</div>
+
+<!-- Map / destinations -->
+<div class="screen" id="screen-map">
+  <header class="bar">
+    <button class="icon-btn" onclick="App.play()">👥</button>
+    <div class="map-player" id="map-player"></div>
+    <button class="icon-btn" onclick="App.showLeaderboard()">🏆</button>
+  </header>
+  <button class="btn big continue" id="btn-continue"></button>
+  <div class="dest-list" id="dest-list"></div>
+</div>
+
+<!-- Leaderboard -->
+<div class="screen" id="screen-leaderboard">
+  <header class="bar">
+    <button class="icon-btn" onclick="App.showMap()">←</button>
+    <h2>🏆 Family Leaderboard</h2>
+    <button class="btn-sound icon-btn" onclick="App.toggleSound()">🔊</button>
+  </header>
+  <div class="lb-rows" id="lb-rows"></div>
+</div>
+
+<!-- Game -->
+<div class="screen" id="screen-game">
+  <header class="bar game-bar">
+    <button class="icon-btn" onclick="Game.saveState();App.showMap()">🗺️</button>
+    <span class="hud" id="hud-level"></span>
+    <span class="hud" id="hud-score">0</span>
+    <span class="hud coins">🪙 <b id="hud-coins">0</b></span>
+    <span class="hud" id="hud-bonus">✨0</span>
+  </header>
+
+  <div class="grid-wrap"><div id="game-grid"></div></div>
+
+  <div class="current-word" id="current-word"></div>
+
+  <div class="wheel-zone">
+    <button class="icon-btn side" onclick="Game.shuffleWheel()" title="Shuffle">🔀</button>
+    <div id="wheel">
+      <svg id="wheel-lines" width="260" height="260"></svg>
+    </div>
+    <button class="icon-btn side" onclick="Game.useHint()" title="Hint (100 coins)">💡</button>
+  </div>
+</div>
+
+<!-- Level complete overlay -->
+<div class="modal" id="level-complete">
+  <div class="modal-box celebrate">
+    <h3 id="lc-title"></h3>
+    <div class="lc-stats">
+      <div>⭐ Score <b id="lc-score"></b></div>
+      <div>✨ Bonus words <b id="lc-bonus"></b></div>
+    </div>
+    <p id="lc-finished" style="display:none">🎉 You finished the whole voyage! You're a word legend!</p>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="document.getElementById('level-complete').classList.remove('visible');App.showMap()">🗺️ Map</button>
+      <button class="btn" id="btn-next-level" onclick="Game.nextLevel()">Next level ➜</button>
+    </div>
+  </div>
+</div>
+
+<canvas id="confetti"></canvas>
+
+<script src="js/firebase-config.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/grid.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/game.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
