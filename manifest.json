@@ -1,0 +1,31 @@
+{
+  "name": "WordVoyage — Word Puzzle Adventure",
+  "short_name": "WordVoyage",
+  "description": "Swipe letters, solve crossword puzzles, and travel the world. A family word game.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#5b3df0",
+  "background_color": "#f6d365",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

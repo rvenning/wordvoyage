@@ -15,6 +15,13 @@ crossword grid, and travel through 7 destinations and 56 levels — Sydney to Ri
 - 💾 Auto-save: quit mid-level and resume on any device
 - 🔊 All sound effects synthesized with WebAudio (no asset downloads)
 - ☁️ Firebase Firestore sync (falls back to localStorage offline)
+- 📲 Installable PWA: "Add to Home Screen" button (native prompt on Chrome/Android, guided steps on iOS Safari), offline play via service worker
+
+## PWA files
+- `manifest.json` — app identity: name, icons, standalone display, theme colours
+- `sw.js` — service worker; precaches the app shell, then network-first with cache fallback (online players always get the newest deploy, offline players get the last one they loaded)
+- `js/pwa.js` — registers the worker and drives the install button (`beforeinstallprompt` / `appinstalled` on Chrome, instruction modal on iOS)
+- `icons/` — 192/512 PNG app icons plus a maskable variant for Android adaptive icons
 
 ## Local development
 No build step — it's plain HTML/CSS/JS. Serve the folder with any static server:

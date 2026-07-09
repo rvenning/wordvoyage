@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>WordVoyage 🌍 — Word Puzzle Adventure</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#5b3df0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="WordVoyage">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
@@ -18,6 +25,7 @@
     <h1 class="logo">Word<span>Voyage</span></h1>
     <p class="tagline">Swipe letters. Solve puzzles. Travel the world!</p>
     <button class="btn big" onclick="App.play()">✈️ Start the Voyage</button>
+    <button class="btn ghost" id="btn-install" style="display:none">📲 Add to Home Screen</button>
     <div class="splash-foot">
       <span id="sync-badge">…</span>
       <button class="btn-sound icon-btn" onclick="App.toggleSound()">🔊</button>
@@ -49,6 +57,22 @@
     <div class="modal-actions">
       <button class="btn ghost" onclick="document.getElementById('new-profile-modal').classList.remove('visible')">Cancel</button>
       <button class="btn" onclick="App.createProfile()">Let's go!</button>
+    </div>
+  </div>
+</div>
+
+<!-- iOS install instructions (Safari has no install prompt API) -->
+<div class="modal" id="ios-install-modal">
+  <div class="modal-box">
+    <h3>📲 Add to Home Screen</h3>
+    <p>iPhones and iPads install apps from Safari's share menu:</p>
+    <ol class="ios-steps">
+      <li>Tap the <b>Share</b> button <span class="ios-glyph">⎋</span> at the bottom of Safari</li>
+      <li>Scroll down and tap <b>Add to Home Screen</b></li>
+      <li>Tap <b>Add</b> — WordVoyage appears like a real app!</li>
+    </ol>
+    <div class="modal-actions">
+      <button class="btn" onclick="document.getElementById('ios-install-modal').classList.remove('visible')">Got it</button>
     </div>
   </div>
 </div>
@@ -153,5 +177,6 @@
 <script src="js/storage.js"></script>
 <script src="js/game.js"></script>
 <script src="js/main.js"></script>
+<script src="js/pwa.js"></script>
 </body>
 </html>
