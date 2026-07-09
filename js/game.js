@@ -246,7 +246,8 @@ const Game = {
     }
     if (this.level.words.includes(word)) {
       this.wordFound(word);
-    } else if (this.level.bonus.includes(word)) {
+    } else if (this.level.bonus.includes(word) ||
+               (word.length >= 3 && typeof DICTIONARY !== "undefined" && DICTIONARY.has(word))) {
       this.bonusFound(word);
     } else {
       Sfx.wrong();
