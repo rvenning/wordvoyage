@@ -169,6 +169,12 @@
 
 <canvas id="confetti"></canvas>
 
+<!-- gamekit cores (vendored from rvenning/gamekit into lib/); WordVoyage keeps
+     its own profile/PIN UI and styling — js/audio.js and js/storage.js build
+     on GK.Sfx / GK.createStorage with unchanged public APIs. -->
+<script src="lib/gk-util.js"></script>
+<script src="lib/gk-audio.js"></script>
+<script src="lib/gk-storage.js"></script>
 <script src="js/firebase-config.js"></script>
 <script src="js/levels.js"></script>
 <script src="js/dictionary.js"></script>

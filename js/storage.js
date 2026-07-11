@@ -1,68 +1,31 @@
-// Persistence: localStorage is the always-available store; when Firebase is
-// configured, profiles + progress are mirrored to Firestore (collection
-// "wordvoyage") so the family shares one leaderboard across devices.
+// Persistence: gamekit storage (lib/gk-storage.js) configured for WordVoyage.
+// Same wv_* localStorage keys and "wordvoyage" Firestore collection as the
+// pre-gamekit implementation, so all existing profiles and progress carry
+// over unchanged. WordVoyage-specific scoring helpers live below.
 
-const Storage = {
-  fb: null, // { db, doc, setDoc, getDocs, collection } when Firebase is live
-  online: false,
-
-  // ---------- local ----------
-  _get(k, fallback) {
-    try { return JSON.parse(localStorage.getItem(k)) ?? fallback; } catch { return fallback; }
-  },
-  _set(k, v) { localStorage.setItem(k, JSON.stringify(v)); },
-
-  getSettings() { return this._get("wv_settings", { sound: true, lastProfile: null }); },
-  saveSettings(s) { this._set("wv_settings", s); },
-
-  getProfiles() { return this._get("wv_profiles", []); },
-  saveProfiles(profiles) { this._set("wv_profiles", profiles); },
-
-  blankProgress() {
-    return { coins: 0, levels: {}, current: null, updated: 0 };
-    // levels: { [levelIdx]: { score, bonus } } best results per level
-    // current: { levelIdx, found: [], foundBonus: [], score, hintCells: [] }
-  },
-
-  getProgress(profileId) { return this._get("wv_progress_" + profileId, this.blankProgress()); },
-
-  saveProgress(profileId, progress) {
-    progress.updated = Date.now();
-    this._set("wv_progress_" + profileId, progress);
-    this._pushProgress(profileId, progress);
-  },
-
-  addProfile(name, avatar, pin = null) {
-    const profiles = this.getProfiles();
-    const p = { id: "p" + Date.now() + Math.floor(Math.random() * 1e4), name, avatar, pin, created: Date.now(), updated: Date.now() };
-    profiles.push(p);
-    this.saveProfiles(profiles);
-    this._pushProfile(p);
-    return p;
-  },
-
-  updateProfile(p) {
-    p.updated = Date.now();
-    this.saveProfiles(this.getProfiles().map(x => x.id === p.id ? p : x));
-    this._pushProfile(p);
-  },
-
-  // Deletes a profile everywhere. A tombstone doc stops other devices'
-  // stale local copies from re-uploading the profile on their next sync.
-  deleteProfile(profileId) {
-    this.saveProfiles(this.getProfiles().filter(p => p.id !== profileId));
-    localStorage.removeItem("wv_progress_" + profileId);
-    this._set("wv_deleted", [...new Set([...this._get("wv_deleted", []), profileId])]);
-    const s = this.getSettings();
-    if (s.lastProfile === profileId) { s.lastProfile = null; this.saveSettings(s); }
-    if (this.fb) {
-      const { db, doc, setDoc, deleteDoc } = this.fb;
-      deleteDoc(doc(db, "wordvoyage", "profile_" + profileId)).catch(e => console.warn("delete profile failed", e));
-      deleteDoc(doc(db, "wordvoyage", "progress_" + profileId)).catch(e => console.warn("delete progress failed", e));
-      setDoc(doc(db, "wordvoyage", "deleted_" + profileId), { id: profileId, at: Date.now() }).catch(e => console.warn("tombstone failed", e));
+const Storage = GK.createStorage({
+  prefix: "wv",
+  collection: "wordvoyage",
+  firebaseConfig: window.FIREBASE_CONFIG, // from js/firebase-config.js; null = offline
+  blankProgress: () => ({ coins: 0, levels: {}, current: null, updated: 0 }),
+  // levels: { [levelIdx]: { score, bonus } } best results per level
+  // current: { levelIdx, found: [], foundBonus: [], score, hintCells: [] }
+  // Cross-device merge: best score per level, max coins, newest in-progress game.
+  mergeProgress: (a, b) => {
+    const levels = { ...a.levels };
+    for (const [idx, lv] of Object.entries(b.levels || {})) {
+      if (!levels[idx] || (lv.score || 0) > (levels[idx].score || 0)) levels[idx] = lv;
     }
+    return {
+      coins: Math.max(a.coins || 0, b.coins || 0),
+      levels,
+      current: (b.updated || 0) > (a.updated || 0) ? b.current : a.current,
+    };
   },
+});
 
+/* ----- WordVoyage-specific helpers on top of the kit storage ----- */
+Object.assign(Storage, {
   totalScore(progress) {
     return Object.values(progress.levels).reduce((s, l) => s + (l.score || 0), 0);
   },
@@ -85,104 +48,4 @@ const Storage = {
     for (const k of Object.keys(progress.levels)) max = Math.max(max, Number(k));
     return max + 1;
   },
-
-  // ---------- Firebase sync ----------
-  async initFirebase() {
-    const cfg = window.FIREBASE_CONFIG;
-    if (!cfg || !cfg.apiKey) return false;
-    try {
-      const appMod = await import("https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js");
-      const fsMod = await import("https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js");
-      const app = appMod.initializeApp(cfg);
-      const db = fsMod.getFirestore(app);
-      this.fb = { db, ...fsMod };
-      await this._syncDown();
-      this.online = true;
-      return true;
-    } catch (e) {
-      console.warn("Firebase unavailable, running on localStorage only:", e);
-      return false;
-    }
-  },
-
-  async _syncDown() {
-    const { db, doc, setDoc, deleteDoc, collection, getDocs } = this.fb;
-    const snap = await getDocs(collection(db, "wordvoyage"));
-    let remoteProfiles = [];
-    const remoteProgress = {};
-    const remoteDeleted = new Set();
-    snap.forEach(d => {
-      const v = d.data();
-      if (d.id.startsWith("profile_")) remoteProfiles.push(v);
-      if (d.id.startsWith("progress_")) remoteProgress[d.id.slice(9)] = v;
-      if (d.id.startsWith("deleted_")) remoteDeleted.add(d.id.slice(8));
-    });
-
-    // Union tombstones from both sides, purge anything they cover.
-    const deleted = new Set([...this._get("wv_deleted", []), ...remoteDeleted]);
-    this._set("wv_deleted", [...deleted]);
-    for (const id of deleted) {
-      if (!remoteDeleted.has(id)) {
-        setDoc(doc(db, "wordvoyage", "deleted_" + id), { id, at: Date.now() }).catch(() => {});
-      }
-      localStorage.removeItem("wv_progress_" + id);
-      delete remoteProgress[id];
-    }
-    // Remote docs that outlived their tombstone (pushed by a stale device): remove them.
-    for (const rp of remoteProfiles) {
-      if (deleted.has(rp.id)) {
-        deleteDoc(doc(db, "wordvoyage", "profile_" + rp.id)).catch(() => {});
-        deleteDoc(doc(db, "wordvoyage", "progress_" + rp.id)).catch(() => {});
-      }
-    }
-    remoteProfiles = remoteProfiles.filter(p => !deleted.has(p.id));
-
-    // Merge profiles by id.
-    const local = this.getProfiles().filter(p => !deleted.has(p.id));
-    const byId = new Map(local.map(p => [p.id, p]));
-    let changed = false;
-    for (const rp of remoteProfiles) {
-      const loc = byId.get(rp.id);
-      if (!loc) { byId.set(rp.id, rp); changed = true; }
-      // Newer remote copy wins (e.g. PIN changed on another device).
-      else if ((rp.updated || 0) > (loc.updated || 0)) { byId.set(rp.id, rp); changed = true; }
-    }
-    if (changed || byId.size !== this.getProfiles().length) this.saveProfiles([...byId.values()]);
-
-    // Push any local-only profiles up.
-    const remoteIds = new Set(remoteProfiles.map(p => p.id));
-    for (const p of byId.values()) if (!remoteIds.has(p.id)) this._pushProfile(p);
-
-    // Merge progress: best score per level, max coins, newest in-progress game.
-    for (const [pid, remote] of Object.entries(remoteProgress)) {
-      const loc = this.getProgress(pid);
-      const merged = this._mergeProgress(loc, remote);
-      this._set("wv_progress_" + pid, merged);
-    }
-  },
-
-  _mergeProgress(a, b) {
-    const levels = { ...a.levels };
-    for (const [idx, lv] of Object.entries(b.levels || {})) {
-      if (!levels[idx] || (lv.score || 0) > (levels[idx].score || 0)) levels[idx] = lv;
-    }
-    return {
-      coins: Math.max(a.coins || 0, b.coins || 0),
-      levels,
-      current: (b.updated || 0) > (a.updated || 0) ? b.current : a.current,
-      updated: Math.max(a.updated || 0, b.updated || 0),
-    };
-  },
-
-  _pushProfile(p) {
-    if (!this.fb) return;
-    const { db, doc, setDoc } = this.fb;
-    setDoc(doc(db, "wordvoyage", "profile_" + p.id), p).catch(e => console.warn("sync profile failed", e));
-  },
-
-  _pushProgress(pid, progress) {
-    if (!this.fb) return;
-    const { db, doc, setDoc } = this.fb;
-    setDoc(doc(db, "wordvoyage", "progress_" + pid), progress).catch(e => console.warn("sync progress failed", e));
-  },
-};
+});
