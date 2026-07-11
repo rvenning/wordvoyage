@@ -13,6 +13,7 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="lib/gk-base.css">
 <link rel="stylesheet" href="css/style.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
 </head>
@@ -30,83 +31,19 @@
     <button class="btn ghost" id="btn-install" style="display:none">📲 Add to Home Screen</button>
     <div class="splash-foot">
       <span id="sync-badge">…</span>
-      <button class="btn-sound icon-btn" onclick="App.toggleSound()">🔊</button>
+      <button class="btn-sound icon-btn">🔊</button>
     </div>
   </div>
 </div>
 
-<!-- Profile picker -->
+<!-- Profile picker (cards + new/PIN/delete modals rendered by GK.Profiles) -->
 <div class="screen" id="screen-profiles">
   <header class="bar">
     <button class="icon-btn" onclick="App.showScreen('splash')">←</button>
     <h2>Who's playing?</h2>
-    <button class="btn-sound icon-btn" onclick="App.toggleSound()">🔊</button>
+    <button class="btn-sound icon-btn">🔊</button>
   </header>
   <div class="profile-list" id="profile-list"></div>
-</div>
-
-<!-- New profile modal -->
-<div class="modal" id="new-profile-modal">
-  <div class="modal-box">
-    <h3>New Explorer</h3>
-    <input id="new-name" maxlength="14" placeholder="Your name" autocomplete="off"
-           onkeydown="if(event.key==='Enter')App.createProfile()">
-    <input id="new-pin" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
-           placeholder="Secret 4-digit PIN (optional)"
-           oninput="this.value=this.value.replace(/\D/g,'')"
-           onkeydown="if(event.key==='Enter')App.createProfile()">
-    <div class="avatar-grid" id="avatar-grid"></div>
-    <div class="modal-actions">
-      <button class="btn ghost" onclick="document.getElementById('new-profile-modal').classList.remove('visible')">Cancel</button>
-      <button class="btn" onclick="App.createProfile()">Let's go!</button>
-    </div>
-  </div>
-</div>
-
-<!-- iOS install instructions (Safari has no install prompt API) -->
-<div class="modal" id="ios-install-modal">
-  <div class="modal-box">
-    <h3>📲 Add to Home Screen</h3>
-    <p>iPhones and iPads install apps from Safari's share menu:</p>
-    <ol class="ios-steps">
-      <li>Tap the <b>Share</b> button <span class="ios-glyph">⎋</span> at the bottom of Safari</li>
-      <li>Scroll down and tap <b>Add to Home Screen</b></li>
-      <li>Tap <b>Add</b> — WordVoyage appears like a real app!</li>
-    </ol>
-    <div class="modal-actions">
-      <button class="btn" onclick="document.getElementById('ios-install-modal').classList.remove('visible')">Got it</button>
-    </div>
-  </div>
-</div>
-
-<!-- PIN keypad (verify or set) -->
-<div class="modal" id="pin-modal">
-  <div class="modal-box">
-    <h3 id="pin-title"></h3>
-    <p class="pin-sub" id="pin-sub"></p>
-    <div class="pin-dots" id="pin-dots"><span></span><span></span><span></span><span></span></div>
-    <div class="pin-pad" id="pin-pad"></div>
-    <div class="modal-actions">
-      <button class="btn ghost" onclick="App.closePin()">Cancel</button>
-      <button class="btn ghost" id="btn-pin-remove" style="display:none" onclick="App.removePin()">Remove PIN</button>
-    </div>
-  </div>
-</div>
-
-<!-- Delete profile confirmation -->
-<div class="modal" id="delete-modal">
-  <div class="modal-box">
-    <h3 id="del-title"></h3>
-    <p class="del-warn">⚠️ This erases their levels, coins and scores on <b>every device</b>. It can't be undone!</p>
-    <p>Type <b id="del-name"></b> to confirm:</p>
-    <input id="del-confirm" maxlength="14" autocomplete="off" placeholder="Type the name"
-           oninput="App.updateDeleteButton()"
-           onkeydown="if(event.key==='Enter')App.confirmDeleteProfile()">
-    <div class="modal-actions">
-      <button class="btn ghost" onclick="document.getElementById('delete-modal').classList.remove('visible')">Cancel</button>
-      <button class="btn danger" id="btn-delete-confirm" disabled onclick="App.confirmDeleteProfile()">Delete forever</button>
-    </div>
-  </div>
 </div>
 
 <!-- Map / destinations -->
@@ -125,7 +62,7 @@
   <header class="bar">
     <button class="icon-btn" onclick="App.showMap()">←</button>
     <h2>🏆 Family Leaderboard</h2>
-    <button class="btn-sound icon-btn" onclick="App.toggleSound()">🔊</button>
+    <button class="btn-sound icon-btn">🔊</button>
   </header>
   <div class="lb-rows" id="lb-rows"></div>
 </div>
@@ -171,12 +108,15 @@
 
 <canvas id="confetti"></canvas>
 
-<!-- gamekit cores (vendored from rvenning/gamekit into lib/); WordVoyage keeps
-     its own profile/PIN UI and styling — js/audio.js and js/storage.js build
-     on GK.Sfx / GK.createStorage with unchanged public APIs. -->
+<!-- gamekit (vendored from rvenning/gamekit into lib/): storage, profiles/PIN
+     UI, screens/modals, PWA install. Themed via --gk-* vars in css/style.css.
+     js/audio.js and js/storage.js extend GK.Sfx / GK.createStorage. -->
 <script src="lib/gk-util.js"></script>
 <script src="lib/gk-audio.js"></script>
+<script src="lib/gk-ui.js"></script>
 <script src="lib/gk-storage.js"></script>
+<script src="lib/gk-profiles.js"></script>
+<script src="lib/gk-pwa.js"></script>
 <script src="js/firebase-config.js"></script>
 <script src="js/levels.js"></script>
 <script src="js/dictionary.js"></script>
@@ -185,6 +125,5 @@
 <script src="js/storage.js"></script>
 <script src="js/game.js"></script>
 <script src="js/main.js"></script>
-<script src="js/pwa.js"></script>
 </body>
 </html>

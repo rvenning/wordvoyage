@@ -3,7 +3,7 @@
 // newest deploy; offline players get the last version they loaded. Firestore
 // sync degrades gracefully offline because storage.js falls back to localStorage.
 
-const CACHE = "wordvoyage-v3";
+const CACHE = "wordvoyage-v4";
 
 // App shell precached at install so the game works offline from the first visit.
 const SHELL = [
@@ -11,9 +11,13 @@ const SHELL = [
   "index.html",
   "manifest.json",
   "css/style.css",
+  "lib/gk-base.css",
   "lib/gk-util.js",
   "lib/gk-audio.js",
+  "lib/gk-ui.js",
   "lib/gk-storage.js",
+  "lib/gk-profiles.js",
+  "lib/gk-pwa.js",
   "js/firebase-config.js",
   "js/levels.js",
   "js/dictionary.js",
@@ -22,7 +26,6 @@ const SHELL = [
   "js/storage.js",
   "js/game.js",
   "js/main.js",
-  "js/pwa.js",
   "icons/icon-192.png",
   "icons/icon-512.png",
   "icons/maskable-512.png",

@@ -30,18 +30,6 @@ Object.assign(Storage, {
     return Object.values(progress.levels).reduce((s, l) => s + (l.score || 0), 0);
   },
 
-  leaderboard() {
-    return this.getProfiles().map(p => {
-      const prog = this.getProgress(p.id);
-      return {
-        ...p,
-        score: this.totalScore(prog),
-        levelsDone: Object.keys(prog.levels).length,
-        coins: prog.coins,
-      };
-    }).sort((a, b) => b.score - a.score);
-  },
-
   // Highest completed level index + 1 = next unlocked level.
   unlockedLevel(progress) {
     let max = -1;
