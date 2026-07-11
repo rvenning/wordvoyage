@@ -24,7 +24,9 @@
     <div class="splash-globe">🌍</div>
     <h1 class="logo">Word<span>Voyage</span></h1>
     <p class="tagline">Swipe letters. Solve puzzles. Travel the world!</p>
-    <button class="btn big" onclick="App.play()">✈️ Start the Voyage</button>
+    <!-- shown when this device has a last explorer: one-tap continue -->
+    <button class="btn big" id="btn-continue-as" style="display:none"></button>
+    <button class="btn big" id="btn-start" onclick="App.play()">✈️ Start the Voyage</button>
     <button class="btn ghost" id="btn-install" style="display:none">📲 Add to Home Screen</button>
     <div class="splash-foot">
       <span id="sync-badge">…</span>

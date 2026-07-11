@@ -18,12 +18,32 @@ const App = {
     Storage.initFirebase().then(ok => {
       this.el("sync-badge").textContent = ok ? "☁️ synced" : "📴 offline";
       if (ok && document.querySelector("#screen-profiles.active")) this.renderProfiles();
+      if (ok && document.querySelector("#screen-splash.active")) this.refreshSplash();
     });
   },
 
   showScreen(name) {
     document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
     this.el("screen-" + name).classList.add("active");
+    if (name === "splash") this.refreshSplash();
+  },
+
+  // One-tap "Continue as <last explorer>" on the splash; Start becomes Switch.
+  refreshSplash() {
+    const s = Storage.getSettings();
+    const last = (s.lastProfile && Storage.getProfiles().find(p => p.id === s.lastProfile)) || null;
+    const cont = this.el("btn-continue-as"), start = this.el("btn-start");
+    if (last) {
+      cont.style.display = "";
+      cont.textContent = `✈️ Continue as ${last.avatar} ${last.name}`;
+      cont.onclick = () => { Sfx.init(); Sfx.click(); this.selectProfile(last); };
+      start.classList.add("ghost");
+      start.textContent = "👥 Switch Explorer";
+    } else {
+      cont.style.display = "none";
+      start.classList.remove("ghost");
+      start.textContent = "✈️ Start the Voyage";
+    }
   },
 
   // ---------- splash ----------
