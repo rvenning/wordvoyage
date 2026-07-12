@@ -27,7 +27,7 @@ crossword grid, and travel through 7 destinations and 56 levels — Sydney to Ri
 No build step — it's plain HTML/CSS/JS. Serve the folder with any static server:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools/serve.ps1   # http://localhost:8080
+npx http-server . -p 8080 -c-1   # http://localhost:8080
 ```
 
 ## Storage
