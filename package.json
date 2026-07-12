@@ -1,0 +1,9 @@
+{
+  "name": "wordvoyage",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Family word-puzzle adventure (no build step; plain HTML/CSS/JS on gamekit).",
+  "scripts": {
+    "test": "node --test"
+  }
+}

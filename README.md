@@ -30,6 +30,21 @@ No build step — it's plain HTML/CSS/JS. Serve the folder with any static serve
 npx http-server . -p 8080 -c-1   # http://localhost:8080
 ```
 
+## Tests
+`tests/grid.test.js` runs `buildGrid()` over every level and doubles as a
+level-data linter — a typo'd word or an unpackable level fails at commit time
+instead of in front of a kid. No framework, just Node's runner:
+
+```
+node --test        # or: npm test
+```
+
+It checks, for all 112 levels: every word is placed exactly once, the grid is
+letter-consistent (crossings agree, no orphan cells, tight bounds), every word
+and bonus word is actually spellable from the wheel letters, and no level is
+*unexpectedly* disconnected (seven anagram-heavy levels are known to render as
+separate clusters and are allowlisted; a newly disconnected level fails).
+
 ## Storage
 Progress lives in `localStorage` and mirrors to Cloud Firestore
 (collection `wordvoyage`, config in `js/firebase-config.js`). The Firebase API key
