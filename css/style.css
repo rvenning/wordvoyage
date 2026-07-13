@@ -154,7 +154,7 @@ body {
   padding: 10px; border-radius: 14px; border: 3px solid #d8d4f0; outline: none;
 }
 .modal-box input:focus { border-color: #7c5cff; }
-.avatar-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.avatar-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
 .avatar-choice {
   font-size: 1.7rem; padding: 6px; cursor: pointer;
   background: #f1effc; border: 3px solid transparent; border-radius: 12px;

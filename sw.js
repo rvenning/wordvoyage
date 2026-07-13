@@ -3,7 +3,7 @@
 // newest deploy; offline players get the last version they loaded. Firestore
 // sync degrades gracefully offline because storage.js falls back to localStorage.
 
-const CACHE = "wordvoyage-v4";
+const CACHE = "wordvoyage-v5";
 
 // App shell precached at install so the game works offline from the first visit.
 const SHELL = [
