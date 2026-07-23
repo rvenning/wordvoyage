@@ -297,3 +297,12 @@ body {
 @media (max-height: 720px) {
   #wheel { width: 220px; height: 220px; }
 }
+
+/* Reduced motion: silence the decorative loops (bobbing globe, pulsing level
+   dot + celebrate heading). Confetti is skipped in js/game.js. Brief functional
+   feedback (pops, shakes, toasts) is left alone -- it conveys state, not flourish. */
+@media (prefers-reduced-motion: reduce) {
+  .splash-globe,
+  .lvl-dot.next,
+  .celebrate h3 { animation: none; }
+}

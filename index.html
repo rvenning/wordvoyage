@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WordVoyage 🌍 — Word Puzzle Adventure</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#5b3df0">
@@ -31,7 +31,7 @@
     <button class="btn ghost" id="btn-install" style="display:none">📲 Add to Home Screen</button>
     <div class="splash-foot">
       <span id="sync-badge">…</span>
-      <button class="btn-sound icon-btn">🔊</button>
+      <button class="btn-sound icon-btn" aria-label="Toggle sound">🔊</button>
     </div>
   </div>
 </div>
@@ -39,9 +39,9 @@
 <!-- Profile picker (cards + new/PIN/delete modals rendered by GK.Profiles) -->
 <div class="screen" id="screen-profiles">
   <header class="bar">
-    <button class="icon-btn" onclick="App.showScreen('splash')">←</button>
+    <button class="icon-btn" onclick="App.showScreen('splash')" aria-label="Back">←</button>
     <h2>Who's playing?</h2>
-    <button class="btn-sound icon-btn">🔊</button>
+    <button class="btn-sound icon-btn" aria-label="Toggle sound">🔊</button>
   </header>
   <div class="profile-list" id="profile-list"></div>
 </div>
@@ -49,9 +49,9 @@
 <!-- Map / destinations -->
 <div class="screen" id="screen-map">
   <header class="bar">
-    <button class="icon-btn" onclick="App.play()">👥</button>
+    <button class="icon-btn" onclick="App.play()" aria-label="Switch player">👥</button>
     <div class="map-player" id="map-player"></div>
-    <button class="icon-btn" onclick="App.showLeaderboard()">🏆</button>
+    <button class="icon-btn" onclick="App.showLeaderboard()" aria-label="Leaderboard">🏆</button>
   </header>
   <button class="btn big continue" id="btn-continue"></button>
   <div class="dest-list" id="dest-list"></div>
@@ -60,9 +60,9 @@
 <!-- Leaderboard -->
 <div class="screen" id="screen-leaderboard">
   <header class="bar">
-    <button class="icon-btn" onclick="App.showMap()">←</button>
+    <button class="icon-btn" onclick="App.showMap()" aria-label="Back to map">←</button>
     <h2>🏆 Family Leaderboard</h2>
-    <button class="btn-sound icon-btn">🔊</button>
+    <button class="btn-sound icon-btn" aria-label="Toggle sound">🔊</button>
   </header>
   <div class="lb-rows" id="lb-rows"></div>
 </div>
@@ -70,7 +70,7 @@
 <!-- Game -->
 <div class="screen" id="screen-game">
   <header class="bar game-bar">
-    <button class="icon-btn" onclick="Game.saveState();App.showMap()">🗺️</button>
+    <button class="icon-btn" onclick="Game.saveState();App.showMap()" aria-label="Back to map">🗺️</button>
     <span class="hud" id="hud-level"></span>
     <span class="hud" id="hud-score">0</span>
     <span class="hud coins">🪙 <b id="hud-coins">0</b></span>
@@ -82,11 +82,11 @@
   <div class="current-word" id="current-word"></div>
 
   <div class="wheel-zone">
-    <button class="icon-btn side" onclick="Game.shuffleWheel()" title="Shuffle">🔀</button>
+    <button class="icon-btn side" onclick="Game.shuffleWheel()" title="Shuffle" aria-label="Shuffle letters">🔀</button>
     <div id="wheel">
       <svg id="wheel-lines" width="260" height="260"></svg>
     </div>
-    <button class="icon-btn side" onclick="Game.useHint()" title="Hint (100 coins)">💡</button>
+    <button class="icon-btn side" onclick="Game.useHint()" title="Hint (100 coins)" aria-label="Hint">💡</button>
   </div>
 </div>
 

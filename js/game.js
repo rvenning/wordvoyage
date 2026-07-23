@@ -387,6 +387,8 @@ const Game = {
 // ---------- confetti ----------
 const Confetti = {
   burst() {
+    // Respect reduced-motion: skip the full-screen particle shower.
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const canvas = document.getElementById("confetti");
     const ctx = canvas.getContext("2d");
     canvas.width = innerWidth; canvas.height = innerHeight;
