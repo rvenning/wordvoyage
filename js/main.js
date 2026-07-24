@@ -25,6 +25,17 @@ const App = {
 
     GK.initPWA({ appName: "WordVoyage" });
 
+    // ?debug=1 only. Passing Storage makes the kit suppress progress writes,
+    // so jumping levels or revealing words can't inflate a real explorer's
+    // score or the family leaderboard.
+    GK.Debug.init({ storage: Storage, title: "WORDVOYAGE" })
+      .toggle("freecoins", "free hints")
+      .action("reveal all", () => Game.revealAll())
+      .jump("level", LEVELS.length, n => {
+        if (!this.profile) return GK.Debug.note("pick an explorer first");
+        Game.start(this.profile, n - 1);
+      });
+
     this.showScreen("splash");
     // Firebase sync happens in the background; the game is playable immediately.
     Storage.initFirebase().then(ok => {
@@ -101,7 +112,8 @@ const App = {
         const gi = start + i;
         const cls = prog.levels[gi] ? "done" : gi === unlocked ? "next" : gi < unlocked ? "done" : "locked";
         const icon = prog.levels[gi] ? "✓" : gi === unlocked ? "▶" : "🔒";
-        return `<button class="lvl-dot ${cls}" data-level="${gi}" ${gi > unlocked ? "disabled" : ""}>${icon}</button>`;
+        // debug unlocks every dot so any level is one click away
+        return `<button class="lvl-dot ${cls}" data-level="${gi}" ${(gi > unlocked && !GK.Debug.on) ? "disabled" : ""}>${icon}</button>`;
       }).join("");
       card.innerHTML = `
         <div class="dest-head">
