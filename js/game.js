@@ -289,7 +289,10 @@ const Game = {
 
   useHint() {
     Sfx.init();
-    if (this.progress.coins < HINT_COST) {
+    // Debug "free coins" makes hints cost nothing, so a level can be probed
+    // without grinding for coins first. Off (and absent) for normal players.
+    const free = GK.Debug.flag("freecoins");
+    if (!free && this.progress.coins < HINT_COST) {
       this.toast("Need " + HINT_COST + " coins for a hint!", "dup");
       Sfx.wrong();
       return;
@@ -298,7 +301,7 @@ const Game = {
     const open = [...this.cellEls.entries()].filter(([, el]) => !el.classList.contains("filled"));
     if (!open.length) return;
     const [key] = open[Math.floor(Math.random() * open.length)];
-    this.progress.coins -= HINT_COST;
+    if (!free) this.progress.coins -= HINT_COST;
     this.hintCells.add(key);
     this.revealCell(key);
     Sfx.hint();
@@ -318,6 +321,22 @@ const Game = {
       }
     }
     this.saveState();
+  },
+
+  // Debug only: fill in every remaining word. Goes through the normal
+  // reveal/score path so the level completes exactly as it would by hand,
+  // which is the point -- it's for reaching the end screen quickly, not for
+  // faking it. Progress writes are suppressed while debug is on.
+  revealAll() {
+    if (!GK.Debug.on) return;
+    for (const word of this.level.words) {
+      if (this.found.has(word)) continue;
+      this.revealWord(word, false);
+      this.found.add(word);
+      this.levelScore += wordScore(word);
+    }
+    this.updateHud();
+    setTimeout(() => this.levelComplete(), 300);
   },
 
   // ---------- persistence ----------
